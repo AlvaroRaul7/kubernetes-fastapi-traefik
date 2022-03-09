@@ -1,0 +1,6 @@
+- 
+  hosts: traefik
+  connection: local
+  roles:
+    - role: githubixx.traefik_kubernetes
+      tags: role-traefik-kubernetes
