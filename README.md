@@ -5,9 +5,9 @@ Backend API (Python) in FastApi in a Kubernetes Cluster using Traefik as an API 
 
 ## Description of the directories
 
--ansible : Folder with the resources to deploy the traefik pods using Ansible
--kubernetes: Folder with the YAML files to deploy the API and the Postgres Database
--sa-service-2: Folder with the source code of the API
+- ansible : Folder with the resources to deploy the traefik pods using Ansible
+- kubernetes: Folder with the YAML files to deploy the API and the Postgres Database
+- sa-service-2: Folder with the source code of the API
 
 
 ## Requirements for installing the project
@@ -31,10 +31,10 @@ To install run `brew install helm`
 
 **After installing everything above and running Docker Desktop in your PC**
  Run in your terminal:
- 1.- `minikube start` (Used to initiate a default local cluster with the default namespace)
- 2.- `minikube tunnel` (Used to get an external ip of the cluster to access in the host OS) (Run it in a separate terminal, Don’t close it)
- 3.- `kubectl proxy` (Used to forwading the port 8001 to access the k8s dashboard)  
- 4.- Go to: http://127.0.0.1:8001/api/v1/namespaces/kubernetes-dashboard/services/http:kubernetes-dashboard:/proxy/#/deployment?namespace=default
+ - `minikube start` (Used to initiate a default local cluster with the default namespace)
+ - `minikube tunnel` (Used to get an external ip of the cluster to access in the host OS) (Run it in a separate terminal, Don’t close it)
+ - `kubectl proxy` (Used to forwading the port 8001 to access the k8s dashboard)  
+ - Go to: http://127.0.0.1:8001/api/v1/namespaces/kubernetes-dashboard/services/http:kubernetes-dashboard:/proxy/#/deployment?namespace=default
  In this URL, you can check that there aren’t any deployments yet in the default namespace.
  
 ## 2.- Steps to start the Traefik Pods
@@ -43,12 +43,13 @@ The Traefik Service is managed by using Ansible, so you can open the file `ansib
 of deployment is a **DaemonSet**
 
 
--Traefik listens on port 80 on all interfaces of the host for incoming HTTP requests
--Traefik listens on port 443 on all interfaces of the host for incoming HTTPS request
--Traefik dashboard is enabled and is not exposed to the public internet
+- Traefik listens on port 80 on all interfaces of the host for incoming HTTP requests
+- Traefik listens on port 443 on all interfaces of the host for incoming HTTPS request
+- Traefik dashboard is enabled and is not exposed to the public internet.
+
 Ports exposed:
 
-`ports:
+```ports:
   
   # To access the dashboard you can use "kubectl port-forward" e.g.:
   # kubectl -n traefik port-forward $(kubectl get pods --selector "app.kubernetes.io/name=traefik" --output=name -A | head -1) 9000:9000
@@ -56,10 +57,12 @@ Ports exposed:
   traefik:
     port: 9000
     expose: true
-    protocol: TCP`
+    protocol: TCP
+```
 
 Resources:
-`# CPU and RAM resource limits. These settings should also be set to
+
+```11# CPU and RAM resource limits. These settings should also be set to
 # reasonable values in case of a memory leak e.g.
 resources:
   requests:
@@ -67,7 +70,8 @@ resources:
     memory: "50Mi"
   limits:
     cpu: "300m"
-    memory: "150Mi"`
+    memory: "150Mi"
+ ```
     
  In the `ansible/defaults/main.yml`, you can change the namespace for the deployment (Traefik) , name for the ingress controller,etc.
  
@@ -77,20 +81,77 @@ resources:
  ** If you don’t have the file or folder, please create it using `sudo mkdir /etc/ansible` and `sudo touch hosts` then edit it:
  and paste this:
  
- `[traefik]
-  localhost`
+ ```
+ [traefik]
+ localhost
+ 
+ ```
   
  We are telling Ansible that the traefik dns will translate to localhost
   
- After doing this we are ready to deploy:
+ **After doing this we are ready to deploy**:
  
  To deploy the Traefik Service in the traefik namespace:
-    1.-  `cd ansible`
-    2.-  `ansible-playbook --tags=role-traefik-kubernetes --extra-vars action=install k8s.yml`
+ 
+ -  `cd ansible`
+ -  `ansible-playbook --tags=role-traefik-kubernetes --extra-vars action=install k8s.yml`
+ 
  One of the final tasks is called `TASK [githubixx.traefik-kubernetes : Output rendered template]`. This allows to check the YAML file before Traefik gets deployed
  If everything is OK , run `kubectl -n traefik get pods -o wide` and you will see a pod with the traefik initials.
  
  To forward the ports to check the traefik dashboard, run:
  `kubectl -n traefik port-forward $(kubectl get pods --selector "app.kubernetes.io/name=traefik" --output=name -A | head -1) 9000:9000`
+ 
+ Open:
+ http://localhost:9000/dashboard/#/http/services to check that everything is working correctly.
+ 
+ ## Steps to deploy the Postgres Database
+ 
+ To deploy the database in the K8s cluster, we are going to use diferent YAML files.
+ 
+- `cd kubernetes`
+ 
+ In this folder, there are 4 YAML files for the Postgres Deployment.
+ 
+- `postgres-configmap.yaml`  A K8s ConfigMap allows me to save important variables like the name of the db, POSTGRES_USER, POSTGRES_PASSWORD.
+- `postgres-storage.yaml`  2 different kinds of volume: PersistentVolume and PersistentVolumeClaim used to preserve the data if a pod is deleted.
+- `postgres-service.yaml` A K8s Service that allows me to connect to the Postgres DB and with other pods in the same cluster.
+- `postgres-deployment.yaml` A K8s Deployment with a Postgres 10.1 image.
+ 
+ In the kubernetes folder:
+ 
+ Run:
+ 
+- `kubectl apply -f postgres-configmap.yaml`
+- `kubectl apply -f postgres-storage.yaml`
+- `kubectl apply -f postgres-deployment.yaml`
+- `kubectl apply -f postgres-service.yaml`
+
+- If you run `kubectl get all` you can check that everything is deployed.
+- Run `kubectl port-forward --namespace default svc/postgres-ip-service 5432:5432` to port forwarding and access the database using `localhost:5432`
+- Connect to the database using your favorite DB client like Datagrip, DBeaver,etc.
+
+Inside the users database, run this query:
+
+```
+CREATE TABLE rappiuser (
+	user_id serial PRIMARY KEY,
+	name VARCHAR ( 50 ) UNIQUE NOT NULL,
+	lastname VARCHAR ( 50 ) NOT NULL,
+	address VARCHAR ( 250 ) NOT NULL,
+	phone INTEGER NOT NULL,
+	age  INTEGER NOT NULL,
+	hire_date DATE,
+	fire_date DATE
+
+
+);
+
+```
+
+That’s all for the db configuration.
+
+## Steps to deploy the FastApi Backend
+
  
  
