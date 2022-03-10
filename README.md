@@ -23,7 +23,10 @@ Follow these steps: https://minikube.sigs.k8s.io/docs/start/
   -  openshift
   -  pyyaml
   -  kubernetes
+  
+  
 To install python libraries run Eg: `pip install openshift`
+
 - Helm V3 (Kubernetes Package Manager)
 To install run `brew install helm`
 
@@ -37,7 +40,7 @@ To install run `brew install helm`
  - Go to: http://127.0.0.1:8001/api/v1/namespaces/kubernetes-dashboard/services/http:kubernetes-dashboard:/proxy/#/deployment?namespace=default
  In this URL, you can check that there aren’t any deployments yet in the default namespace.
  
-## 2.- Steps to start the Traefik Pods
+## 2.- Steps to deploy Traefik using Ansible
 
 The Traefik Service is managed by using Ansible, so you can open the file `ansible/templates/traefik_values_default.yml.j2` where you can check that the type
 of deployment is a **DaemonSet**
@@ -153,5 +156,35 @@ That’s all for the db configuration.
 
 ## Steps to deploy the FastApi Backend
 
+Finally, the last step is deploying the API. 
+
+- `cd sa-service-2`
+
+Inside the app folder you can check that is structured in models, schemas, services and utils with a main.py file that contains the routes.
+
+Inside the sa-service-2 folder, run:
+
+- `minikube image build -t sa-service-2 . ` 
+
+This command upload the backend image to the minikube local registry, to use it for the deployment.
+
+- `cd ..` return to the previous dir.
+- `kubectl apply -f resource-manifests/service-two.yml` Apply a Deployment, Service and an Ingress Controller.
+
+Deployment:
+
+Define the name for the deployment, and the image that will be used `sa-service-2`.
+
+Service:
+
+Define the port that will be exposed in this case is the Port 80
+
+Ingress:
+
+The Ingress Controller will be handled by Traefik and will listen in the port 80
+
  
+Now you can go to http://localhost/docs and start testing the API :)
+
+
  
