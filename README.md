@@ -188,25 +188,5 @@ Now you can go to http://localhost/docs and start testing the API :)
 
 In the http://localhost:9000/dashboard/#/http/services you can check there is a new ingress controller that handles 2 pods 
 
-## Deployment in AWS
 
-- ¿Qué servicios utilizarías?
-
-Utilizaria Amazon RDS para alojar la base de datos y configurando Security Groups para mejorar la seguridad de la base o tambien podria utilizar un StatefulSet in Kubernetes para evitar perdidas de datos.
-
-Para el deployment de los pods utilizaria Amazon EKS, el cual es un servicio que se encarga de administrar un cluster de kubernetes.
-
-- ¿Cómo crearías la infraestructura?
-
-Crearia la infraestructura utilizando Terraform para colaborar con compañeros en el codigo de la infraestructura.
-
-- ¿Cómo la mantendrías?
-
-La mantendria utilizando Terraform para actualizar cambios en la infraestructura, sea para disminuir recursos o aumentarlos.
-Integraria Datadog como plataforma de observability para monitorear los pods en el cluster.
-
-- Arquitectura propuesta con un gráfico
-
-
- ![Arquitectura](https://user-images.githubusercontent.com/39871126/157591393-9ccd81d3-bc30-4f1e-90ae-1744b9e79919.png)
 
